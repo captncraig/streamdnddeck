@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	streamdeck "github.com/magicmonkey/go-streamdeck"
 	_ "github.com/magicmonkey/go-streamdeck/devices"
@@ -11,10 +12,13 @@ import (
 )
 
 type Character struct {
-	Name       string `yaml:"name"`
-	Icon       string `yaml:"icon"`
-	Hp         HPInfo `yaml:"hp"`
-	SpellSlots SSInfo `yaml:"spell_slots"`
+	Name          string `yaml:"name"`
+	Icon          string `yaml:"icon"`
+	Hp            HPInfo `yaml:"hp"`
+	SpellSlots    SSInfo `yaml:"spell_slots"`
+	AC            int    `yaml:"ac"`
+	SorcPoints    int    `yaml:"sorc_points"`
+	SorcPointsMax int    `yaml:"sorc_points_max"`
 }
 type HPInfo struct {
 	Current int `yaml:"current"`
@@ -29,8 +33,15 @@ type SSInfo struct {
 
 type Page interface {
 	Render(*streamdeck.Device)
-	ButtonPress(btnIndex int, sd *streamdeck.Device)
-	ButtonRelease(btnIndex int, sd *streamdeck.Device)
+	ButtonPress(btnIndex int, sd *streamdeck.Device) bool
+	ButtonRelease(btnIndex int, sd *streamdeck.Device) bool
+	Tick() bool
+}
+
+var newPage = make(chan Page, 100)
+
+func changePage(p Page) {
+	newPage <- p
 }
 
 func main() {
@@ -51,23 +62,46 @@ func main() {
 		log.Fatal(err)
 	}
 	fmt.Println(hyacinth)
-
 	var currentPage Page = &homePage{char: hyacinth}
 
 	currentPage.Render(sd)
+	down := make(chan int, 100)
+	up := make(chan int, 100)
 
 	sd.ButtonPress(func(btnIndex int, sd *streamdeck.Device, err error) {
-		fmt.Println(btnIndex)
 		if err != nil {
 			panic(err)
 		}
-		currentPage.ButtonPress(btnIndex, sd)
+		down <- btnIndex
 	})
 
 	sd.ButtonRelease(func(btnIndex int, sd *streamdeck.Device, err error) {
-		fmt.Println("!!!", btnIndex)
-		currentPage.ButtonRelease(btnIndex, sd)
+		if err != nil {
+			panic(err)
+		}
+		up <- btnIndex
 	})
 
-	select {}
+	tick := time.NewTicker(100 * time.Millisecond)
+	for {
+		select {
+		case p := <-newPage:
+			currentPage = p
+			sd.ClearButtons()
+			p.Render(sd)
+		case <-tick.C:
+			if currentPage.Tick() {
+				currentPage.Render(sd)
+			}
+		case i := <-down:
+			if currentPage.ButtonPress(i, sd) {
+				currentPage.Render(sd)
+			}
+		case i := <-up:
+			if currentPage.ButtonRelease(i, sd) {
+				currentPage.Render(sd)
+			}
+		}
+
+	}
 }

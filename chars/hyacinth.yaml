@@ -8,3 +8,6 @@ hp:
 spell_slots:
     current: [4,2,0,3,2,1,1,0,0]
     max: [4,3,3,3,2,1,1,0,0]
+ac: 13
+sorc_points: 8
+sorc_points_max: 15

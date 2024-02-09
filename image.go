@@ -54,8 +54,7 @@ func drawTextToImageX(text string, textColour color.Color, dstImage image.Image,
 	c.SetClip(dstImage.Bounds())
 
 	pt := freetype.Pt(x, y)
-	log.Println(c.DrawString(text, pt))
-	log.Println(text, pt)
+	c.DrawString(text, pt)
 }
 func drawTextToImage(text string, textColour color.Color, dstImage image.Image, size int, y int) {
 	btnSize := 72
