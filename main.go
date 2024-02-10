@@ -11,26 +11,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type Character struct {
-	Name          string `yaml:"name"`
-	Icon          string `yaml:"icon"`
-	Hp            HPInfo `yaml:"hp"`
-	SpellSlots    SSInfo `yaml:"spell_slots"`
-	AC            int    `yaml:"ac"`
-	SorcPoints    int    `yaml:"sorc_points"`
-	SorcPointsMax int    `yaml:"sorc_points_max"`
-}
-type HPInfo struct {
-	Current int `yaml:"current"`
-	Max     int `yaml:"max"`
-	Temp    int `yaml:"temp"`
-	MaxMod  int `yaml:"max_mod"`
-}
-type SSInfo struct {
-	Current []int `yaml:"current"`
-	Max     []int `yaml:"max"`
-}
-
 type Page interface {
 	Render(*streamdeck.Device)
 	ButtonPress(btnIndex int, sd *streamdeck.Device) bool
@@ -63,7 +43,7 @@ func main() {
 	}
 	fmt.Println(hyacinth)
 	var currentPage Page = &homePage{char: hyacinth}
-
+	home := currentPage
 	currentPage.Render(sd)
 	down := make(chan int, 100)
 	up := make(chan int, 100)
@@ -83,9 +63,14 @@ func main() {
 	})
 
 	tick := time.NewTicker(100 * time.Millisecond)
+	btnsDown := map[int]bool{}
 	for {
 		select {
 		case p := <-newPage:
+			if p == nil {
+				p = home
+			}
+			btnsDown = map[int]bool{}
 			currentPage = p
 			sd.ClearButtons()
 			p.Render(sd)
@@ -94,10 +79,16 @@ func main() {
 				currentPage.Render(sd)
 			}
 		case i := <-down:
+			btnsDown[i] = true
 			if currentPage.ButtonPress(i, sd) {
 				currentPage.Render(sd)
 			}
 		case i := <-up:
+			// only send release event if there was a down since the last state change
+			if !btnsDown[i] {
+				continue
+			}
+			btnsDown[i] = false
 			if currentPage.ButtonRelease(i, sd) {
 				currentPage.Render(sd)
 			}

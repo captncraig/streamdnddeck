@@ -10,10 +10,6 @@ import (
 	streamdeck "github.com/magicmonkey/go-streamdeck"
 )
 
-type homePage struct {
-	char *Character
-}
-
 const (
 	idxIcon       = 0
 	idxHp         = 1
@@ -33,6 +29,7 @@ const (
 
 var red = color.RGBA{R: 255, G: 0, B: 0, A: 255}
 var green = color.RGBA{R: 0, G: 255, B: 0, A: 255}
+var blue = color.RGBA{R: 0, G: 0, B: 255, A: 255}
 
 func img(path string) string {
 	return filepath.Join("images", path)
@@ -51,7 +48,6 @@ func renderHpButton(c *Character) image.Image {
 func renderSSButton(c *Character) image.Image {
 	img := newSolid(color.Black)
 	ss := c.SpellSlots
-	log.Println(ss)
 	off := -5
 	xoff := 8
 	split := 72 / 3
@@ -75,21 +71,35 @@ func renderSSButton(c *Character) image.Image {
 	return img
 }
 
+type homePage struct {
+	char            *Character
+	restOptsShowing bool
+}
+
 func (h *homePage) Render(sd *streamdeck.Device) {
-	log.Printf("Rendering home for %s", h.char.Name)
 	sd.WriteImageToButton(idxIcon, img(h.char.Icon))
 
 	sd.WriteRawImageToButton(idxHp, renderHpButton(h.char))
 
 	sd.WriteRawImageToButton(idxSpellSlots, renderSSButton(h.char))
 	sd.WriteImageToButton(idxDice, img("d20.jpg"))
-	sd.WriteImageToButton(idxDaughter, img("wolf.jpg"))
 
+	if h.restOptsShowing {
+		sd.WriteTextToButton(idxDaughter, "LR", color.White, color.Black)
+		sd.WriteTextToButton(idxAttacks, "SR", color.White, color.Black)
+	} else {
+		sd.WriteImageToButton(idxDaughter, img("wolf.jpg"))
+		sd.WriteImageToButton(idxAttacks, img("sword.jpg"))
+	}
 	shield, err := getImageFromFile("shield.png")
 	if err != nil {
 		log.Fatal(err)
 	}
-	drawTextToImage(fmt.Sprint(h.char.AC), color.Black, shield, 40, 50)
+	acColor := red
+	if h.char.AC > 13 {
+		acColor = blue
+	}
+	drawTextToImage(fmt.Sprint(h.char.AC), acColor, shield, 40, 50)
 	sd.WriteRawImageToButton(idxAC, shield)
 
 	sorc, err := getImageFromFile("sorc.png")
@@ -98,13 +108,24 @@ func (h *homePage) Render(sd *streamdeck.Device) {
 	}
 	drawTextToImage(fmt.Sprint(h.char.SorcPoints), color.Black, sorc, 20, 50)
 	sd.WriteRawImageToButton(idxSorc, sorc)
-
+	sd.WriteImageToButton(idxStats, img("stats.png"))
 	sd.WriteImageToButton(idxRest, img("sleep.png"))
-	sd.WriteImageToButton(idxAttacks, img("sword.jpg"))
+
 	sd.WriteImageToButton(idxInv, img("bag.jpg"))
 	sd.WriteImageToButton(idxResources, img("resources.jpg"))
 }
 func (h *homePage) ButtonPress(btnIndex int, sd *streamdeck.Device) bool {
+	if h.restOptsShowing {
+		if btnIndex == idxDaughter {
+			//long rest
+			h.char.LongRest()
+		} else if btnIndex == idxAttacks {
+			//short rest
+			h.char.ShortRest()
+		}
+		h.restOptsShowing = false
+		return true
+	}
 	switch btnIndex {
 	case idxAC:
 		// toggle ac between 13 and 16 for mage armor
@@ -121,8 +142,12 @@ func (h *homePage) ButtonPress(btnIndex int, sd *streamdeck.Device) bool {
 func (h *homePage) ButtonRelease(btnIndex int, sd *streamdeck.Device) bool {
 	switch btnIndex {
 	case idxDice:
-		changePage(&rollPage{char: h.char})
-		return false
+		changePage(&rollPage{})
+	case idxHp:
+		changePage(&HPPage{char: h.char})
+	case idxRest:
+		h.restOptsShowing = true
+		return true
 	}
 	return false
 }
