@@ -1,12 +1,12 @@
 name: Hyacinth
 icon: "hyacinth.png"
 hp:
-    current: 52
-    max: 103
+    current: 87
+    max: 104
     temp: 12
     max_mod: 0
 spell_slots:
-    current: [4,2,0,3,2,1,1,0,0]
+    current: [3,2,2,3,0,0,0,0,0]
     max: [4,3,3,3,2,1,1,0,0]
 ac: 13
 sorc_points: 8

@@ -74,16 +74,20 @@ func renderSSButton(c *Character) image.Image {
 type homePage struct {
 	char            *Character
 	restOptsShowing bool
+	charOptsShowing bool
 }
 
 func (h *homePage) Render(sd *streamdeck.Device) {
 	sd.WriteImageToButton(idxIcon, img(h.char.Icon))
-
-	sd.WriteRawImageToButton(idxHp, renderHpButton(h.char))
-
-	sd.WriteRawImageToButton(idxSpellSlots, renderSSButton(h.char))
 	sd.WriteImageToButton(idxDice, img("d20.jpg"))
 
+	if h.charOptsShowing {
+		sd.WriteTextToButton(idxHp, "sav", color.White, color.Black)
+		sd.WriteTextToButton(idxSpellSlots, "ld", color.White, color.Black)
+	} else {
+		sd.WriteRawImageToButton(idxHp, renderHpButton(h.char))
+		sd.WriteRawImageToButton(idxSpellSlots, renderSSButton(h.char))
+	}
 	if h.restOptsShowing {
 		sd.WriteTextToButton(idxDaughter, "LR", color.White, color.Black)
 		sd.WriteTextToButton(idxAttacks, "SR", color.White, color.Black)
@@ -115,7 +119,7 @@ func (h *homePage) Render(sd *streamdeck.Device) {
 	sd.WriteImageToButton(idxResources, img("resources.jpg"))
 }
 func (h *homePage) ButtonPress(btnIndex int, sd *streamdeck.Device) bool {
-	if h.restOptsShowing {
+	if h.restOptsShowing || h.charOptsShowing {
 		return false
 	}
 	switch btnIndex {
@@ -145,6 +149,17 @@ func (h *homePage) ButtonRelease(btnIndex int, sd *streamdeck.Device) bool {
 		h.restOptsShowing = false
 		return true
 	}
+	if h.charOptsShowing {
+		if btnIndex == idxHp {
+			//sav
+		} else if btnIndex == idxSpellSlots {
+			//ld
+		} else if btnIndex == idxIcon {
+			return false
+		}
+		h.charOptsShowing = false
+		return true
+	}
 	switch btnIndex {
 	case idxDice:
 		changePage(&rollPage{})
@@ -152,6 +167,9 @@ func (h *homePage) ButtonRelease(btnIndex int, sd *streamdeck.Device) bool {
 		changePage(&HPPage{char: h.char})
 	case idxRest:
 		h.restOptsShowing = true
+		return true
+	case idxIcon:
+		h.charOptsShowing = true
 		return true
 	}
 	return false
