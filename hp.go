@@ -8,7 +8,8 @@ import (
 )
 
 type HPPage struct {
-	char *Character
+	char   *Character
+	maxMod bool
 }
 
 func (h *HPPage) Render(sd *streamdeck.Device) {
@@ -22,9 +23,12 @@ func (h *HPPage) Render(sd *streamdeck.Device) {
 	sd.WriteTextToButton(11, "+10", green, color.Black)
 	sd.WriteTextToButton(7, "T+", green, color.Black)
 	sd.WriteTextToButton(12, "T-", red, color.Black)
+	sd.WriteTextToButton(3, fmt.Sprint(h.char.Hp.Max), blue, color.Black)
 }
 func (h *HPPage) ButtonPress(btnIndex int, sd *streamdeck.Device) bool {
 	switch btnIndex {
+	case 3:
+		h.maxMod = true
 	case 5:
 		h.char.Hp.Hurt(1)
 		return true
@@ -38,9 +42,17 @@ func (h *HPPage) ButtonPress(btnIndex int, sd *streamdeck.Device) bool {
 		h.char.Hp.Heal(10)
 		return true
 	case 7:
+		if h.maxMod {
+			h.char.Hp.Max++
+			return true
+		}
 		h.char.Hp.Temp++
 		return true
 	case 12:
+		if h.maxMod {
+			h.char.Hp.Max--
+			return true
+		}
 		if h.char.Hp.Temp == 0 {
 			return false
 		}
@@ -51,6 +63,8 @@ func (h *HPPage) ButtonPress(btnIndex int, sd *streamdeck.Device) bool {
 }
 func (h *HPPage) ButtonRelease(btnIndex int, sd *streamdeck.Device) bool {
 	switch btnIndex {
+	case 3:
+		h.maxMod = false
 	case idx_Home:
 		changePage(nil)
 		return false

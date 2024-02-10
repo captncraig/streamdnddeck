@@ -116,15 +116,7 @@ func (h *homePage) Render(sd *streamdeck.Device) {
 }
 func (h *homePage) ButtonPress(btnIndex int, sd *streamdeck.Device) bool {
 	if h.restOptsShowing {
-		if btnIndex == idxDaughter {
-			//long rest
-			h.char.LongRest()
-		} else if btnIndex == idxAttacks {
-			//short rest
-			h.char.ShortRest()
-		}
-		h.restOptsShowing = false
-		return true
+		return false
 	}
 	switch btnIndex {
 	case idxAC:
@@ -140,6 +132,19 @@ func (h *homePage) ButtonPress(btnIndex int, sd *streamdeck.Device) bool {
 
 }
 func (h *homePage) ButtonRelease(btnIndex int, sd *streamdeck.Device) bool {
+	if h.restOptsShowing {
+		if btnIndex == idxDaughter {
+			//long rest
+			h.char.LongRest()
+		} else if btnIndex == idxAttacks {
+			//short rest
+			h.char.ShortRest()
+		} else if btnIndex == idxRest {
+			return false
+		}
+		h.restOptsShowing = false
+		return true
+	}
 	switch btnIndex {
 	case idxDice:
 		changePage(&rollPage{})
