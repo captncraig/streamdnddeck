@@ -165,6 +165,8 @@ func (h *homePage) ButtonRelease(btnIndex int, sd *streamdeck.Device) bool {
 		changePage(&rollPage{})
 	case idxHp:
 		changePage(&HPPage{char: h.char})
+	case idxSpellSlots:
+		changePage(&SSPage{char: h.char})
 	case idxRest:
 		h.restOptsShowing = true
 		return true
