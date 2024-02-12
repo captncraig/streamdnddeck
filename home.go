@@ -135,6 +135,7 @@ func (h *homePage) ButtonPress(btnIndex int, sd *streamdeck.Device) bool {
 		if h.char.SorcPoints > 0 {
 			h.char.SorcPoints--
 		}
+		return true
 	}
 	return false
 
