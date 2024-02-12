@@ -131,6 +131,10 @@ func (h *homePage) ButtonPress(btnIndex int, sd *streamdeck.Device) bool {
 			h.char.AC = 13
 		}
 		return true
+	case idxSorc:
+		if h.char.SorcPoints > 0 {
+			h.char.SorcPoints--
+		}
 	}
 	return false
 
