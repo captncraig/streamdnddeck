@@ -1,0 +1,11 @@
+[Unit]
+Description=Streamdnddeck service
+
+[Service]
+ExecStart=/usr/bin/streamdnddeck
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
+
+
