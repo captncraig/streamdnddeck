@@ -3,6 +3,7 @@ Description=Streamdnddeck service
 
 [Service]
 ExecStart=/usr/bin/streamdnddeck
+WorkingDirectory=/home/pi/code/streamdnddeck
 Type=simple
 
 [Install]
