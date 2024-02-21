@@ -24,6 +24,32 @@ func changePage(p Page) {
 	newPage <- p
 }
 
+const filename = "chars/hyacinth.yaml"
+
+func loadChar() *Character {
+	charBytes, err := os.ReadFile(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	hyacinth := &Character{}
+	if err = yaml.Unmarshal(charBytes, hyacinth); err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(hyacinth)
+	return hyacinth
+}
+
+func saveChar(c *Character) {
+	dat, err := yaml.Marshal(c)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = os.WriteFile(filename, dat, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func main() {
 	sd, err := streamdeck.Open()
 	if err != nil {
@@ -33,16 +59,7 @@ func main() {
 	sd.ClearButtons()
 	sd.SetBrightness(50)
 
-	charBytes, err := os.ReadFile("chars/hyacinth.yaml")
-	if err != nil {
-		log.Fatal(err)
-	}
-	hyacinth := &Character{}
-	if err = yaml.Unmarshal(charBytes, hyacinth); err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(hyacinth)
-	var currentPage Page = &homePage{char: hyacinth}
+	var currentPage Page = &homePage{char: loadChar()}
 	home := currentPage
 	currentPage.Render(sd)
 	down := make(chan int, 100)

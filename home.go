@@ -157,8 +157,10 @@ func (h *homePage) ButtonRelease(btnIndex int, sd *streamdeck.Device) bool {
 	if h.charOptsShowing {
 		if btnIndex == idxHp {
 			//sav
+			saveChar(h.char)
 		} else if btnIndex == idxSpellSlots {
-			//ld
+			//load
+			h.char = loadChar()
 		} else if btnIndex == idxIcon {
 			return false
 		}
